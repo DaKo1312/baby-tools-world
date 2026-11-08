@@ -39,17 +39,25 @@ class ProductViewAndCommentFormTests(TestCase):
         self.assertIn("form", resp.context)
         self.assertIn("comments", resp.context)
 
-    def test_authenticated_user_form_prefilled_with_existing_comment(self):
-        # existing comment
+    def test_authenticated_user_form_is_empty_despite_existing_comment(self) -> None:
+        """The review form stays empty even if the user has already reviewed the product.
+
+        The project requirements ask for a review form whose fields are cleared
+        after a review has been submitted. Pre-filling the form on a later visit
+        would put the submitted values back into the fields, so the form is never
+        pre-filled and the existing review is only shown in the review list.
+        """
         Comment.objects.create(product=self.product, user=self.user, rating=3, text="Existing")
         self.client.login(username="tester", password="pass1234")
         url = reverse("product_detail", args=[self.category.slug, self.product.pk])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         form = resp.context["form"]
-        # initial data should reflect existing comment
-        self.assertEqual(form.initial.get("rating"), 3)
-        self.assertEqual(form.initial.get("text"), "Existing")
+        # No initial data, so the rating stars and the comment text are empty
+        self.assertIsNone(form.initial.get("rating"))
+        self.assertIsNone(form.initial.get("text"))
+        # The existing review itself is still listed on the page
+        self.assertContains(resp, "Existing")
 
     # -------- Authenticated user comment flow (create/upsert) --------
     def test_authenticated_user_create_comment(self):

@@ -30,9 +30,11 @@ def product_list(request: HttpRequest, category_slug: str | None = None) -> Http
 def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpResponse:
     """Render the details of a single product and handle its review form.
 
-    A successful review submission is answered with a redirect to this view. The
-    redirected request renders the review form with empty fields, so that the
-    rating stars and the comment text are cleared after the submission.
+    A successful review submission is answered with a redirect to this view, so
+    that a reload of the page does not submit the review a second time. The
+    review form is always rendered with empty fields, which means that the
+    rating stars and the comment text are cleared after a submission and stay
+    cleared when the page is opened again.
 
     Args:
         request: The incoming HTTP request.
@@ -83,19 +85,11 @@ def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpRes
                 comment.save()
                 messages.success(request, "Thank you for your rating.")
 
-            # Remember the successful submission for the request that follows the
-            # redirect, so that the review form can be rendered with empty fields.
-            request.session["review_submitted"] = True
             return redirect("product_detail", category_slug=category_slug, pk=product.pk)
     else:
-        initial: dict[str, object] = {}
-        submitted: bool = request.session.pop("review_submitted", False)
-        if not submitted and request.user.is_authenticated:
-            # Pre-fill form for authenticated user with existing comment (if any)
-            existing = product.comments.filter(user=request.user).first()
-            if existing:
-                initial = {"rating": existing.rating, "text": existing.text}
-        form = CommentForm(initial=initial)
+        # The review form is never pre-filled, so that its fields are empty after a
+        # submission and remain empty when the page is opened again.
+        form = CommentForm()
 
     return render(
         request,
