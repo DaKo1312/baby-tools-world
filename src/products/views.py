@@ -30,9 +30,9 @@ def product_list(request: HttpRequest, category_slug: str | None = None) -> Http
 def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpResponse:
     """Render the details of a single product and handle its review form.
 
-    A successful review submission is answered with a redirect to this view, so
-    that the review form is rendered unbound and all of its fields are empty
-    again.
+    A successful review submission is answered with a redirect to this view. The
+    redirected request renders the review form with empty fields, so that the
+    rating stars and the comment text are cleared after the submission.
 
     Args:
         request: The incoming HTTP request.
@@ -83,12 +83,19 @@ def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpRes
                 comment.save()
                 messages.success(request, "Thank you for your rating.")
 
+            # Remember the successful submission for the request that follows the
+            # redirect, so that the review form can be rendered with empty fields.
+            request.session["review_submitted"] = True
             return redirect("product_detail", category_slug=category_slug, pk=product.pk)
     else:
-        # Render an unbound form, so that the rating stars and the comment text
-        # are empty. This also applies after a review has been submitted
-        # successfully, because that request is answered with a redirect.
-        form = CommentForm()
+        initial: dict[str, object] = {}
+        submitted: bool = request.session.pop("review_submitted", False)
+        if not submitted and request.user.is_authenticated:
+            # Pre-fill form for authenticated user with existing comment (if any)
+            existing = product.comments.filter(user=request.user).first()
+            if existing:
+                initial = {"rating": existing.rating, "text": existing.text}
+        form = CommentForm(initial=initial)
 
     return render(
         request,
