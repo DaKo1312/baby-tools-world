@@ -66,6 +66,25 @@ To configure the project, follow these steps:
     - `ALLOWED_HOSTS`: provide a list of comma-separated values for the allowed host configuration => Defaults to `'localhost, 127.0.0.1, 0.0.0.0'`
     - `DEBUG`: Set to `True` for development or `False` for production. Defaults to `True`
 
+### Managing product tags
+
+Products can be labeled with tags such as `organic` or `washable`.
+Tags are optional, which means that a product without any tags is perfectly valid.
+
+Tags are maintained through the Django admin panel:
+
+1. Create a superuser as described in the Quickstart and open the admin panel at `localhost:8000/admin`.
+1. Choose **Tags** and use **Add tag** to create a new tag.
+A tag only needs a name, and that name has to be unique.
+The fields `created at` and `updated at` are filled in by Django and cannot be edited.
+1. Choose **Products**, open a product and assign one or more tags to it.
+The product overview can additionally be filtered by tag.
+
+On the product details page the tags of a product are listed below the rating summary,
+under the heading "Product-Tags".
+If a product has no tags, that heading is still shown and the page displays the label
+"no tags available" instead.
+
 ### Running the linting tools
 
 > [!tip]
