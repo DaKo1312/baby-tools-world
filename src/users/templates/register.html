@@ -1,0 +1,25 @@
+{% extends '_dashboard.html' %}
+
+{% block content %}
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="container content-center mt-4">
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% include "_form_field.html" with field=form.first_name label="First Name" %}
+        {% include "_form_field.html" with field=form.last_name label="Last Name" %}
+        {% include "_form_field.html" with field=form.username label="Username" %}
+        {% include "_form_field.html" with field=form.email label="Email" %}
+        {% include "_form_field.html" with field=form.password1 label="Password" %}
+        {% include "_form_field.html" with field=form.password2 label="Repeat Password" %}
+
+        <input type="submit" value="Register now" class="btn btn-primary">
+    </div>
+</form>
+
+{% endblock %}

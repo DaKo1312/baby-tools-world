@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip=[
+    "migrations",
+    "*venv",
+    "__pycache__",
+    "site-packages"
+]
+
+[tool.flake8]
+select = ["E", "W", "F"]
+extend-ignore = ["E203", "W503"]
+max-line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "*venv",
+    ".venv",
+    "env",
+    ".env",
+    "migrations",
+]

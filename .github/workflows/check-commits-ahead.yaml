@@ -1,0 +1,36 @@
+name: Check commits ahead of main
+
+on:
+  workflow_call:
+    inputs:
+      min_commits:
+        description: Minimum number of commits the branch must have ahead of main
+        type: number
+        default: 2
+
+permissions:
+  contents: read
+
+jobs:
+  check-commits:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Check commit count ahead of main
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          MIN_COMMITS: ${{ inputs.min_commits }}
+        run: |
+          COMMIT_COUNT=$(git rev-list --count origin/main..HEAD)
+          if [ "$COMMIT_COUNT" -lt "$MIN_COMMITS" ]; then
+            echo "Branch '$BRANCH_NAME' has only $COMMIT_COUNT commit(s) ahead of main (minimum: $MIN_COMMITS)."
+            echo "Please add more commits to the branch before submitting a pull request."
+            exit 1
+          fi
+
+          echo "Branch '$BRANCH_NAME' has $COMMIT_COUNT commits ahead of main."

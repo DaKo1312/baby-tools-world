@@ -1,0 +1,55 @@
+default:
+  interruptible: true
+  image: python:3.12-alpine
+  before_script:
+    - pip install -r requirements.txt
+
+stages:
+  - test
+
+variables:
+  WORKFLOW_NAME: "Default CI/CD Pipeline"
+
+# Workflow rules to determine when to create what type of pipeline
+workflow:
+  name: "${WORKFLOW_NAME}"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        WORKFLOW_NAME: "Merge-Request Pipeline"
+    - if: $CI_COMMIT_TAG
+      variables:
+        WORKFLOW_NAME: "Running Tag-Pipeline"
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      variables:
+        WORKFLOW_NAME: 'Running Branch-Pipeline for "${CI_COMMIT_BRANCH}"'
+
+test:run-django-tests:
+  stage: test
+  script:
+    - cd src
+    - coverage run --branch --omit=manage.py,test*.py manage.py test
+    # if the execution should fail under a certain coverage level
+    # add the --fail option like follows:
+    # coverage report -m --skip-covered --skip-empty --fail <YOUR_DESIRED_COVERAGE>
+    - coverage report -m --skip-covered --skip-empty
+    - coverage xml --skip-empty -o coverage.xml
+  coverage: "/TOTAL.+ ([0-9]{1,3}%)/"
+  artifacts:
+    expire_in: "3 days"
+    paths:
+      - coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+      junit: coverage.xml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      allow_failure: true
+      changes:
+        paths:
+          - src/**/*.py
+          - requirements.txt
+        compare_to: $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

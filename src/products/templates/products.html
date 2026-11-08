@@ -1,0 +1,69 @@
+{% extends '_dashboard.html' %}
+{% block content %}
+<div class="row ml-2 mt-3">
+  <div class="col-2">
+    <div class="list-group">
+      <a href="/" class="list-group-item list-group-item-action active" aria-current="true">
+        Categories
+      </a>
+      {% for category in categories %}
+      <a href="{% url 'products_by_category' category.slug %}" class="list-group-item list-group-item-action">
+        {{category.name}}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-10">
+    <div class="row">
+      {% for product in products %}
+
+      <div class="card  mt-3" style="width: 18rem; margin: 0 0.25rem;">
+        {% if product.image %}
+        {% load static %}
+        <img src="{{ product.image.url }}" class="card-img-top" width="300" height="230">
+        {% else %}
+        <img src="https://placehold.co/300x200" class="card-img-top" width="300" height="230">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">
+            <a href="{% url 'product_detail' product.category.slug product.id %}" title="{{ product.name }}">
+              {{ product.name | truncatechars:20 }}
+            </a>
+          </h5>
+          <div class="mb-1 text-muted">
+            {{product.price}} &euro;
+          </div>
+          <div class="mb-2">
+            {% if product.total_ratings > 0 %}
+              <span title="{{ product.total_ratings }} total rating(s)">
+                {% with product.avg_rating|floatformat:1 as avg %}
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= product.avg_rating %}
+                      <span class="text-warning">&#9733;</span>
+                    {% else %}
+                      <span class="text-secondary">&#9734;</span>
+                    {% endif %}
+                  {% endfor %}
+                  <strong>{{ avg }}</strong>
+                {% endwith %}
+              </span>
+            {% else %}
+              <span class="text-muted" title="No ratings yet">No ratings</span>
+            {% endif %}
+          </div>
+          <p class="card-text">
+            {{product.description | truncatechars:80}}
+          </p>
+        </div>
+        <div class="card-footer text-muted text-center">
+          <a href="{% url 'product_detail' product.category.slug product.id %}" class="btn btn-primary">
+            See Details
+          </a>
+        </div>
+      </div>
+
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+name: Check markdown lint
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  MARKDOWN_FILES: README.md
+
+jobs:
+  check-markdown-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6.0.2
+      with:
+        fetch-depth: 0
+    - name: Run markdownlint
+      uses: DavidAnson/markdownlint-cli2-action@v23.2.0
+      with:
+        globs: ${{ env.MARKDOWN_FILES }}

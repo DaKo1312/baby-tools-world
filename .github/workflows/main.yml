@@ -1,0 +1,26 @@
+name: Check open PR for feature branch
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    types: [opened]
+
+jobs:
+  check-commits:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/check-commits-ahead.yaml
+    with:
+      min_commits: 2
+
+  check-for-open-pr:
+    permissions:
+      pull-requests: read
+    uses: ./.github/workflows/check-open-pr.yaml
+
+  check-markdown-lint:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/check-markdown-lint.yaml

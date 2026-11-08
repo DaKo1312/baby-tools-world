@@ -1,0 +1,262 @@
+{% extends '_dashboard.html' %}
+{% load static form_extras %}
+{% block content %}
+
+<div class="px-4">
+  <!-- Product main card -->
+  <div class="col-md-12 mt-4">
+    <div class="row g-0 border rounded overflow-hidden flex-md-row mb-4 shadow-sm position-relative">
+      <div class="col p-4 d-flex flex-column position-static">
+        <!-- (1) Product core info -->
+        <h3 class="mb-0">{{ product.name }}</h3>
+        <div class="mb-1 text-muted">{{ product.price }} &euro;</div>
+        <p class="card-text mb-3">
+          {% if product.description %}
+            {{ product.description }}
+          {% else %}
+            <span class="fst-italic">No description provided</span>
+          {% endif %}
+        </p>
+
+        <!-- (2) Rating summary (only if ratings exist) -->
+        {% with avg=product.avg_rating|default:product.average_rating count=product.total_ratings|default:product.rating_count %}
+          {% if count > 0 %}
+            <div class="mb-3">
+              <strong>Rating:</strong>
+              <span class="align-middle">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= avg %}
+                    <span class="text-warning">&#9733;</span>
+                  {% else %}
+                    <span class="text-secondary">&#9734;</span>
+                  {% endif %}
+                {% endfor %}
+                <span class="ms-1">{{ avg|floatformat:1 }} ({{ count }})</span>
+              </span>
+            </div>
+          {% else %}
+            <div class="mb-3 text-muted">No ratings yet</div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="btn btn-primary btn-center mt-auto">Buy now</div>
+      </div>
+
+      <div class="col-auto d-none d-lg-block">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" width="400" height="400" alt="{{ product.name }}">
+        {% else %}
+          <img src="https://placehold.co/400x400" width="400" height="400" alt="Placeholder">
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews (1/3) + Related products (2/3) -->
+  <div class="row mb-5">
+    <div class="col-lg-4 mb-4 mb-lg-0">
+      <h4 class="mb-3">Customer Reviews</h4>
+      <ul class="list-unstyled mb-4">
+        {% if comments %}
+          {% for c in comments %}
+            <li class="mb-3 pb-3 border-bottom">
+              <div class="d-flex justify-content-between">
+                <strong>{% if c.user %}{{ c.user.username }}{% else %}{{ c.guest_name|default:"Guest" }}{% endif %}</strong>
+                <span>
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= c.rating %}
+                      <span class="text-warning">&#9733;</span>
+                    {% else %}
+                      <span class="text-secondary">&#9734;</span>
+                    {% endif %}
+                  {% endfor %}
+                  <span class="ms-1">{{ c.rating }}</span>
+                </span>
+              </div>
+              <small class="text-muted">{{ c.created_at|date:"Y-m-d H:i" }}</small>
+              {% if c.text %}<p class="mt-2 mb-0">{{ c.text }}</p>{% endif %}
+            </li>
+          {% endfor %}
+        {% else %}
+          <li class="text-muted">No comments yet.</li>
+        {% endif %}
+      </ul>
+      <div class="card">
+        <div class="card-body p-3">
+          <h6 class="mb-3">Add your review</h6>
+
+          <style>
+            .rating-group {
+              display: flex;
+              flex-direction: row-reverse;
+              justify-content: flex-start;
+              gap: .35rem;
+            }
+            .rating-group input {
+              display: none;
+            }
+            .rating-group label {
+              font-size: 1.4rem;
+              cursor: pointer;
+              color: #bbb;
+              transition: color .2s;
+              line-height: 1;
+              margin: 0;
+            }
+            .rating-group input:checked ~ label,
+            .rating-group label:hover,
+            .rating-group label:hover ~ label {
+              color: #f1b500;
+            }
+            .rating-hint {
+              font-size: .75rem;
+              color: #6c757d;
+              margin-top: -2px;
+            }
+            .form-helper {
+              font-size: .7rem;
+              color: #6c757d;
+            }
+            .guest-fields {
+              background: #f8f9fa;
+              border: 1px solid #e3e6e8;
+              border-radius: .35rem;
+              padding: .65rem .75rem .25rem;
+            }
+          </style>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Rating (stars) -->
+            <div class="mb-3">
+              <label class="form-label d-block mb-1">Your Rating *</label>
+              <div class="rating-group">
+                {% for star in "54321" %}
+                  <input type="radio"
+                         name="rating"
+                         id="rating-{{ star }}"
+                         value="{{ star }}"
+                         {% if form.rating.value|stringformat:"s" == star %}checked{% endif %}>
+                  <label for="rating-{{ star }}" title="{{ star }} star{% if star != '1' %}s{% endif %}">&#9733;</label>
+                {% endfor %}
+              </div>
+              {% if form.rating.errors %}
+                <div class="text-danger small mt-1">{{ form.rating.errors.0 }}</div>
+              {% endif %}
+              <div class="rating-hint">Click a star to set your rating (5 = best).</div>
+            </div>
+
+            <!-- Text -->
+            <div class="mb-3">
+              <label for="{{ form.text.id_for_label }}" class="form-label mb-1">Comment (optional)</label>
+              {{ form.text|add_class:"form-control form-control-sm"|attr:"placeholder=Share your experience..." }}
+              {% if form.text.errors %}
+                <div class="text-danger small mt-1">{{ form.text.errors.0 }}</div>
+              {% else %}
+                <div class="form-helper text-end">{{ form.text.field.max_length }} max chars</div>
+              {% endif %}
+            </div>
+
+            {% if not request.user.is_authenticated %}
+              <div class="mb-3 guest-fields">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label for="{{ form.guest_name.id_for_label }}" class="form-label mb-1">Name *</label>
+                    {{ form.guest_name|add_class:"form-control form-control-sm"|attr:"placeholder=Your name" }}
+                    {% if form.guest_name.errors %}
+                      <div class="text-danger small mt-1">{{ form.guest_name.errors.0 }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-6">
+                    <label for="{{ form.guest_email.id_for_label }}" class="form-label mb-1">Email *</label>
+                    {{ form.guest_email|add_class:"form-control form-control-sm"|attr:"placeholder=name@example.com" }}
+                    {% if form.guest_email.errors %}
+                      <div class="text-danger small mt-1">{{ form.guest_email.errors.0 }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="form-helper mt-2">
+                  A lightweight guest account will be created for moderation purposes.
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center">
+              <button class="btn btn-sm btn-primary px-3">Submit Review</button>
+              {% if not request.user.is_authenticated %}
+                <a href="{% url 'login' %}" class="small">Have an account? Login</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <h4 class="mb-3">Other products you might be interested in</h4>
+      {% if related_products %}
+        <!-- Increase column count so each card is narrower -->
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3">
+          {% for other in related_products %}
+            <div class="col">
+              <div class="card">
+                {% if other.image %}
+                  <img
+                    src="{{ other.image.url }}"
+                    class="card-img-top related-img"
+                    alt="{{ other.name }}"
+                    style="height:160px; width:100%; object-fit:cover; aspect-ratio:16/9;"
+                  >
+                {% else %}
+                  <img
+                    src="https://placehold.co/320x180"
+                    class="card-img-top related-img"
+                    alt="Placeholder"
+                    style="height:160px; width:100%; object-fit:cover; aspect-ratio:16/9;"
+                  >
+                {% endif %}
+                <div class="card-body p-2">
+                  <h6 class="card-title mb-1" style="font-size:0.9rem;">
+                    <a href="{% url 'product_detail' other.category.slug other.pk %}" title="{{ other.name }}">
+                      {{ other.name|truncatechars:32 }}
+                    </a>
+                  </h6>
+                  <div class="small text-muted mb-1">{{ other.price }} &euro;</div>
+                  <p class="card-text small mb-2" style="font-size:0.7rem;">
+                    {{ other.description|default:''|truncatechars:60 }}
+                  </p>
+                  {% with oavg=other.avg_rating|default:0 ocnt=other.total_ratings|default:0 %}
+                    {% if ocnt|add:0 > 0 %}
+                      <div class="small">
+                        {% for i in "12345" %}
+                          {% if forloop.counter <= oavg %}
+                            <span class="text-warning">&#9733;</span>
+                          {% else %}
+                            <span class="text-secondary">&#9734;</span>
+                          {% endif %}
+                        {% endfor %}
+                        <span class="ms-1">{{ oavg|floatformat:1 }}</span>
+                      </div>
+                    {% else %}
+                      <div class="small text-muted">No ratings</div>
+                    {% endif %}
+                  {% endwith %}
+                </div>
+                <div class="card-footer text-center p-2">
+                  <a href="{% url 'product_detail' other.category.slug other.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                    Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">No related products.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
