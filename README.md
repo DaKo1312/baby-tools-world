@@ -6,6 +6,41 @@ The project was developed for educational purposes only and therefore has no cla
 > [!NOTE]
 > This project assumes you already know the python programming language
 
+## Table of Contents
+
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Quickstart](#quickstart)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+
+## Features
+
+- **Product catalog and categories**
+Visitors browse all products on the start page and narrow the list down with the category menu.
+Every product card shows the image, the price and the average rating.
+- **Product details**
+Each product has its own page with description, price, image, rating summary and related products
+from the same category.
+- **Product tags**
+Products can be labeled with tags such as `organic` or `washable`.
+The tags appear on the product details page under the heading "Product-Tags", and a product without
+tags shows the label "no tags available" instead.
+- **Customer reviews**
+Visitors rate a product from one to five stars and may add a comment.
+Signed-in users keep one review per product that they can update later, while guests provide a name
+and an email address.
+The form is cleared once a review has been submitted.
+- **User accounts**
+Visitors can register, sign in and sign out, and signed-in users write their reviews under their own
+name.
+- **Administration**
+Products, categories, tags and reviews are maintained in the Django admin panel at `/admin`.
+Creating a superuser is described in the Quickstart.
+- **Sample data**
+The management command `python manage.py seed_db` fills an empty database with a set of categories
+and products, which is the quickest way to get a populated shop for development.
+
 ## Prerequisites
 
 In order to seamlessly interact with the repository and the software it contains you need to following tools preinstalled:
