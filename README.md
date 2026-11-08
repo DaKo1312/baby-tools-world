@@ -28,9 +28,10 @@ The tags appear on the product details page under the heading "Product-Tags", an
 tags shows the label "no tags available" instead.
 - **Customer reviews**
 Visitors rate a product from one to five stars and may add a comment.
-Signed-in users keep one review per product that they can update later, while guests provide a name
-and an email address.
-The form is cleared once a review has been submitted.
+Signed-in users keep one review per product, which is replaced when they submit a new one, while
+guests provide a name and an email address.
+The form is always shown with empty fields, so it is cleared once a review has been submitted and
+the submitted values do not reappear when the page is opened again.
 - **User accounts**
 Visitors can register, sign in and sign out, and signed-in users write their reviews under their own
 name.
