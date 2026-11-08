@@ -245,7 +245,7 @@ class ProductViewAndCommentFormTests(TestCase):
         self.assertLess(idx_c, idx_b)
 
     # -------- Product tags on the detail page --------
-    def test_product_detail_shows_assigned_tags(self):
+    def test_product_detail_shows_assigned_tags(self) -> None:
         """The detail page lists the tags of a product below the heading."""
         self.product.tags.set([Tag.objects.create(name="Organic"), Tag.objects.create(name="Washable")])
         url = reverse("product_detail", args=[self.category.slug, self.product.pk])
@@ -256,7 +256,7 @@ class ProductViewAndCommentFormTests(TestCase):
         self.assertContains(resp, "Washable")
         self.assertNotContains(resp, "no tags available")
 
-    def test_product_detail_without_tags_shows_fallback_label(self):
+    def test_product_detail_without_tags_shows_fallback_label(self) -> None:
         """A product without tags shows the heading and the fallback label."""
         url = reverse("product_detail", args=[self.category.slug, self.product.pk])
         resp = self.client.get(url)
@@ -265,7 +265,7 @@ class ProductViewAndCommentFormTests(TestCase):
         self.assertContains(resp, "no tags available")
 
     # -------- Review form is cleared after a submission --------
-    def test_review_form_is_cleared_after_successful_submission(self):
+    def test_review_form_is_cleared_after_successful_submission(self) -> None:
         """After a review has been submitted the form fields are empty again."""
         Comment.objects.create(product=self.product, user=self.user, rating=3, text="Old")
         self.client.login(username="tester", password="pass1234")
