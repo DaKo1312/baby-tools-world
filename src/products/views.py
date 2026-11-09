@@ -1,12 +1,23 @@
 from django.contrib import messages
 from django.db.models import Avg, Count
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import CommentForm
 from .models import Category, Comment, Product
 
 
-def product_list(request, category_slug=None):
+def product_list(request: HttpRequest, category_slug: str | None = None) -> HttpResponse:
+    """Render the product overview, optionally restricted to a single category.
+
+    Args:
+        request: The incoming HTTP request.
+        category_slug: The slug of the category to filter by. If it is omitted,
+            the products of all categories are listed.
+
+    Returns:
+        HttpResponse: The rendered product overview page.
+    """
     categories = Category.objects.all()
     products = Product.objects.select_related("category").annotate(
         avg_rating=Avg("comments__rating"), total_ratings=Count("comments")
@@ -16,7 +27,24 @@ def product_list(request, category_slug=None):
     return render(request, "products.html", {"categories": categories, "products": products})
 
 
-def product_detail(request, category_slug, pk):
+def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpResponse:
+    """Render the details of a single product and handle its review form.
+
+    A successful review submission is answered with a redirect to this view, so
+    that a reload of the page does not submit the review a second time. The
+    review form is always rendered with empty fields, which means that the
+    rating stars and the comment text are cleared after a submission and stay
+    cleared when the page is opened again.
+
+    Args:
+        request: The incoming HTTP request.
+        category_slug: The slug of the category the product belongs to.
+        pk: The primary key of the product.
+
+    Returns:
+        HttpResponse: The rendered product details page, or a redirect to this
+            page after a review has been saved successfully.
+    """
     product = get_object_or_404(
         Product.objects.select_related("category").annotate(
             avg_rating=Avg("comments__rating"), total_ratings=Count("comments")
@@ -37,8 +65,8 @@ def product_detail(request, category_slug, pk):
     if request.method == "POST":
         form = CommentForm(request.POST, initial={"user": request.user if request.user.is_authenticated else None})
         if form.is_valid():
-            rating = form.cleaned_data["rating"]
-            text = form.cleaned_data.get("text", "")
+            rating: int = form.cleaned_data["rating"]
+            text: str = form.cleaned_data.get("text", "")
 
             if request.user.is_authenticated:
                 # Upsert: update existing comment or create a new one
@@ -59,13 +87,9 @@ def product_detail(request, category_slug, pk):
 
             return redirect("product_detail", category_slug=category_slug, pk=product.pk)
     else:
-        # Pre-fill form for authenticated user with existing comment (if any)
-        initial = {}
-        if request.user.is_authenticated:
-            existing = product.comments.filter(user=request.user).first()
-            if existing:
-                initial = {"rating": existing.rating, "text": existing.text}
-        form = CommentForm(initial=initial)
+        # The review form is never pre-filled, so that its fields are empty after a
+        # submission and remain empty when the page is opened again.
+        form = CommentForm()
 
     return render(
         request,

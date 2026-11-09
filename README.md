@@ -6,6 +6,42 @@ The project was developed for educational purposes only and therefore has no cla
 > [!NOTE]
 > This project assumes you already know the python programming language
 
+## Table of Contents
+
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Quickstart](#quickstart)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+
+## Features
+
+- **Product catalog and categories**
+Visitors browse all products on the start page and narrow the list down with the category menu.
+Every product card shows the image, the price and the average rating.
+- **Product details**
+Each product has its own page with description, price, image, rating summary and related products
+from the same category.
+- **Product tags**
+Products can be labeled with tags such as `organic` or `washable`.
+The tags appear on the product details page under the heading "Product-Tags", and a product without
+tags shows the label "no tags available" instead.
+- **Customer reviews**
+Visitors rate a product from one to five stars and may add a comment.
+Signed-in users keep one review per product, which is replaced when they submit a new one, while
+guests provide a name and an email address.
+The form is always shown with empty fields, so it is cleared once a review has been submitted and
+the submitted values do not reappear when the page is opened again.
+- **User accounts**
+Visitors can register, sign in and sign out, and signed-in users write their reviews under their own
+name.
+- **Administration**
+Products, categories, tags and reviews are maintained in the Django admin panel at `/admin`.
+Creating a superuser is described in the Quickstart.
+- **Sample data**
+The management command `python manage.py seed_db` fills an empty database with a set of categories
+and products, which is the quickest way to get a populated shop for development.
+
 ## Prerequisites
 
 In order to seamlessly interact with the repository and the software it contains you need to following tools preinstalled:
@@ -65,6 +101,25 @@ To configure the project, follow these steps:
 2. Open your `src/.env` and set the required environment variables:
     - `ALLOWED_HOSTS`: provide a list of comma-separated values for the allowed host configuration => Defaults to `'localhost, 127.0.0.1, 0.0.0.0'`
     - `DEBUG`: Set to `True` for development or `False` for production. Defaults to `True`
+
+### Managing product tags
+
+Products can be labeled with tags such as `organic` or `washable`.
+Tags are optional, which means that a product without any tags is perfectly valid.
+
+Tags are maintained through the Django admin panel:
+
+1. Create a superuser as described in the Quickstart and open the admin panel at `localhost:8000/admin`.
+1. Choose **Tags** and use **Add tag** to create a new tag.
+A tag only needs a name, and that name has to be unique.
+The fields `created at` and `updated at` are filled in by Django and cannot be edited.
+1. Choose **Products**, open a product and assign one or more tags to it.
+The product overview can additionally be filtered by tag.
+
+On the product details page the tags of a product are listed below the rating summary,
+under the heading "Product-Tags".
+If a product has no tags, that heading is still shown and the page displays the label
+"no tags available" instead.
 
 ### Running the linting tools
 

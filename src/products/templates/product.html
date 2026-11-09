@@ -39,6 +39,22 @@
           {% endif %}
         {% endwith %}
 
+        <!-- (3) Product tags -->
+        {% with product_tags=product.tags.all %}
+          <div class="mb-3">
+            <h6 class="mb-2">Product-Tags</h6>
+            {% if product_tags %}
+              <div class="d-flex flex-wrap gap-1">
+                {% for tag in product_tags %}
+                  <span class="badge bg-secondary">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="text-muted fst-italic">no tags available</span>
+            {% endif %}
+          </div>
+        {% endwith %}
+
         <div class="btn btn-primary btn-center mt-auto">Buy now</div>
       </div>
 

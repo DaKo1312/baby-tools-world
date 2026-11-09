@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from products.models import Category, Comment, Product
+from products.models import Category, Comment, Product, Tag
 
 User = get_user_model()
 
@@ -39,17 +39,25 @@ class ProductViewAndCommentFormTests(TestCase):
         self.assertIn("form", resp.context)
         self.assertIn("comments", resp.context)
 
-    def test_authenticated_user_form_prefilled_with_existing_comment(self):
-        # existing comment
+    def test_authenticated_user_form_is_empty_despite_existing_comment(self) -> None:
+        """The review form stays empty even if the user has already reviewed the product.
+
+        The project requirements ask for a review form whose fields are cleared
+        after a review has been submitted. Pre-filling the form on a later visit
+        would put the submitted values back into the fields, so the form is never
+        pre-filled and the existing review is only shown in the review list.
+        """
         Comment.objects.create(product=self.product, user=self.user, rating=3, text="Existing")
         self.client.login(username="tester", password="pass1234")
         url = reverse("product_detail", args=[self.category.slug, self.product.pk])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         form = resp.context["form"]
-        # initial data should reflect existing comment
-        self.assertEqual(form.initial.get("rating"), 3)
-        self.assertEqual(form.initial.get("text"), "Existing")
+        # No initial data, so the rating stars and the comment text are empty
+        self.assertIsNone(form.initial.get("rating"))
+        self.assertIsNone(form.initial.get("text"))
+        # The existing review itself is still listed on the page
+        self.assertContains(resp, "Existing")
 
     # -------- Authenticated user comment flow (create/upsert) --------
     def test_authenticated_user_create_comment(self):
@@ -243,6 +251,39 @@ class ProductViewAndCommentFormTests(TestCase):
         idx_c = related.index(prod_c)
         idx_b = related.index(prod_b)
         self.assertLess(idx_c, idx_b)
+
+    # -------- Product tags on the detail page --------
+    def test_product_detail_shows_assigned_tags(self) -> None:
+        """The detail page lists the tags of a product below the heading."""
+        self.product.tags.set([Tag.objects.create(name="Organic"), Tag.objects.create(name="Washable")])
+        url = reverse("product_detail", args=[self.category.slug, self.product.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Product-Tags")
+        self.assertContains(resp, "Organic")
+        self.assertContains(resp, "Washable")
+        self.assertNotContains(resp, "no tags available")
+
+    def test_product_detail_without_tags_shows_fallback_label(self) -> None:
+        """A product without tags shows the heading and the fallback label."""
+        url = reverse("product_detail", args=[self.category.slug, self.product.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Product-Tags")
+        self.assertContains(resp, "no tags available")
+
+    # -------- Review form is cleared after a submission --------
+    def test_review_form_is_cleared_after_successful_submission(self) -> None:
+        """After a review has been submitted the form fields are empty again."""
+        Comment.objects.create(product=self.product, user=self.user, rating=3, text="Old")
+        self.client.login(username="tester", password="pass1234")
+        url = reverse("product_detail", args=[self.category.slug, self.product.pk])
+        resp = self.client.post(url, data={"rating": 5, "text": "Updated text"}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        form = resp.context["form"]
+        # The form of the page after the redirect carries no initial values
+        self.assertIsNone(form.initial.get("rating"))
+        self.assertIsNone(form.initial.get("text"))
 
     def test_related_products_limit_max_eight(self):
         # create 10 products; list should still show at most 8 related
